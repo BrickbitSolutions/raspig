@@ -1,15 +1,8 @@
 #include "arduPi.h"
-#include "be_brickbit_gsm_GSMUtil"
-
-void switchModule():
+#include "be_brickbit_gsm_GSMUtil.h"
+#include <unistd.h>
 
 int onModulePin = 2; //The pin to switch on the module (No button press)
-
-int timesToSend = 1;
-int count = 0;
-
-int n_sms,x,sms_start;
-char data[256];
 
 void switchModule(){
     digitalWrite(onModulePin,HIGH);
@@ -42,11 +35,16 @@ JNIEXPORT jboolean JNICALL Java_be_brickbit_gsm_GSMUtil_initGSM
     Serial.println("AT+CMGL=\"ALL\"");
     Serial.flush();
     printf("INIT DONE");
-    return true;
+    return JNI_TRUE;
 }
 
 JNIEXPORT jstring JNICALL Java_be_brickbit_gsm_GSMUtil_readSMS
 (JNIEnv *, jclass){
+    char data[256]; //Text Message
+    //Maybe make this a parameter?
+    int timesToSend = 1;
+    int count = 0;
+    int x;
     while(count < timesToSend){
         delay(1500);
         Serial.println("AT+CPMS=\"SM\",\"SM\",\"SM\"");    //selects SIM memory
@@ -56,6 +54,7 @@ JNIEXPORT jstring JNICALL Java_be_brickbit_gsm_GSMUtil_readSMS
         delay(1000);
         Serial.println("AT+CMGD=,4");
         Serial.flush();
+        //Initialise data (text message)
         for(x=0, x,255;x++){
             data[x]='\0';
         }
@@ -69,25 +68,28 @@ JNIEXPORT jstring JNICALL Java_be_brickbit_gsm_GSMUtil_readSMS
         }while(!(data[x-1]=='K' && data[x-2]=='0') || (x==1));
         count++;
     }
+    return (*env)->NewStringUTF(env, data);
 }
 
 JNIEXPORT jboolean JNICALL Java_be_brickbit_gsm_GSMUtil_sendSMS
-(JNIEnv *, jclass, jstring, jstring){
+(JNIEnv *env, jclass, jstring phone_number, jstring text){
+    //Maybe make this a parameter?
+    int timesToSend = 1;
+    int count = 0;
+    //TODO: convert jstring to char*
     while (count < timesToSend){
         delay(500);
         Serial.print("AT+CMGS=\"");   // send the SMS number
         Serial.print(phone_number);
     	Serial.println("\"");
         delay(1500);
-        Serial.print("System offline.");     // the SMS body
+        Serial.print(text);     // the SMS body
         delay(500);
         Serial.write(0x1A);       //sends ++
         Serial.write(0x0D);
         Serial.write(0x0A);
-        
         delay(1000);
-        
         count++;
     }
-    return true;
+    return JNI_TRUE;
 }
