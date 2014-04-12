@@ -1,4 +1,4 @@
-package be.brickbit.gsm;
+package be.brickbit.gsm.util;
 
 public class GSMUtil {
     static { System.loadLibrary("gsmutil"); }
