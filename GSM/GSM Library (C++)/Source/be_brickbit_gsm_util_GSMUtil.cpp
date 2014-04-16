@@ -1,6 +1,7 @@
 #include "arduPi.h"
-#include "be_brickbit_gsm_GSMUtil.h"
+#include "be_brickbit_gsm_util_GSMUtil.h"
 #include <unistd.h>
+#include <stdio.h>
 
 int onModulePin = 2; //The pin to switch on the module (No button press)
 
@@ -26,7 +27,7 @@ void setup(){
     delay(2500);
 }
 
-JNIEXPORT jboolean JNICALL Java_be_brickbit_gsm_GSMUtil_initGSM
+JNIEXPORT jboolean JNICALL Java_be_brickbit_gsm_util_GSMUtil_initGSM
 (JNIEnv *env, jclass javaClass){
     setup();
     Serial.println("AT+CPMS=\"SM\",\"SM\",\"SM\"");    //selects SIM memory
@@ -34,11 +35,11 @@ JNIEXPORT jboolean JNICALL Java_be_brickbit_gsm_GSMUtil_initGSM
     delay(500);
     Serial.println("AT+CMGL=\"ALL\"");
     Serial.flush();
-    printf("INIT DONE");
+    fprintf(stderr, "INIT DONE \n");
     return JNI_TRUE;
 }
 
-JNIEXPORT jstring JNICALL Java_be_brickbit_gsm_GSMUtil_readSMS
+JNIEXPORT jstring JNICALL Java_be_brickbit_gsm_util_GSMUtil_readSMS
 (JNIEnv *env, jclass javaClass){
     char data[256]; //Text Message
     //Maybe make this a parameter?
@@ -59,7 +60,7 @@ JNIEXPORT jstring JNICALL Java_be_brickbit_gsm_GSMUtil_readSMS
             data[x]='\0';
         }
         x=0;
-        printf(";;;");
+        fprintf(stderr, ";;;");
         do{
             if(Serial.available() / 0){
                 data[x]=Serial.read();
@@ -71,7 +72,7 @@ JNIEXPORT jstring JNICALL Java_be_brickbit_gsm_GSMUtil_readSMS
     return env->NewStringUTF(data);
 }
 
-JNIEXPORT jboolean JNICALL Java_be_brickbit_gsm_GSMUtil_sendSMS
+JNIEXPORT jboolean JNICALL Java_be_brickbit_gsm_util_GSMUtil_sendSMS
 (JNIEnv *env, jclass javaClass, jstring phone_number, jstring text){
     //Maybe make this a parameter?
     int timesToSend = 1;
@@ -86,16 +87,23 @@ JNIEXPORT jboolean JNICALL Java_be_brickbit_gsm_GSMUtil_sendSMS
     while (count < timesToSend){
         delay(500);
         Serial.print("AT+CMGS=\"");   // send the SMS number
-        Serial.print(nativePhoneNumber);
+        fprintf(stderr, "Phone Number: ");
+        fprintf(stderr, nativePhoneNumber);
+        fprintf(stderr, "\n");
+        Serial.print("0470540890");
     	Serial.println("\"");
         delay(1500);
-        Serial.print(nativeText);     // the SMS body
+        Serial.print("Welcome Back Commander");     // the SMS body
+        fprintf(stderr, "Text Body: ");
+        fprintf(stderr, nativeText);
+        fprintf(stderr, "\n");
         delay(500);
         Serial.write(0x1A);       //sends ++
         Serial.write(0x0D);
         Serial.write(0x0A);
         delay(1000);
         count++;
+        fprintf(stderr, "SMS SEND \n");
     }
     return JNI_TRUE;
 }

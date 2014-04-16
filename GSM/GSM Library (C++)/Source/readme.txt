@@ -2,11 +2,9 @@ Tuts:
 
 http://jonisalonen.com/2012/calling-c-from-java-is-easy/
 http://www3.ntu.edu.sg/home/ehchua/programming/java/JavaNativeInterface.html
+http://www.cooking-hacks.com/documentation/tutorials/raspberry-pi-to-arduino-shields-connection-bridge#step4 
 
-$ g++ -fPIC -c be_brickbit_gsm_GSMUtil.cpp -I $JAVA_HOME/include -I $JAVA_HOME/include/darwin
-$ g++ be_brickbit_gsm_GSMUtil.o -shared -o libgsmutil.so -Wl,-soname,gsmutil
-
-g++ -Wl,--add-stdcall-alias -I $JAVA_HOME/include -I $JAVA_HOME/include/darwin -shared -o gsmutil.so be_brickbit_gsm_GSMUtil.cpp
+g++ -fPIC (-lrt -lpthread) be_brickbit_gsm_GSMUtil.cpp arduPi.cpp -I /usr/lib/jvm/jdk-8-oracle-arm-vfp-hflt/include/ -I /usr/lib/jvm/jdk-8-oracle-arm-vfp-hflt/include/linux -shared -o gsmutil.so -Wl,-soname,gsmutil
 
 import ex.TTYUtil;
 public class Test {
