@@ -11,16 +11,19 @@ void switchModule(){
     digitalWrite(onModulePin,LOW);
 }
 
-void setup(){
-    //TODO:Make Pin Code and sms mode a param
+void openConnection(){
     Serial.begin(115200);                // UART baud rate
     delay(1500);
+}
+
+void setup(){
+    //TODO:Make Pin Code and sms mode a param
+    openConnection();
     pinMode(onModulePin, OUTPUT);
-    switchModule();                    // switches the module ON
+    //switchModule();                    // switches the module ON
     for (int i=0;i< 2;i++){
         delay(5000);
     }
-    
     Serial.println("AT+CPIN=5370");
     delay(4500);
     Serial.println("AT+CMGF=1");         // sets the SMS mode to text
@@ -41,6 +44,7 @@ JNIEXPORT jboolean JNICALL Java_be_brickbit_gsm_util_GSMUtil_initGSM
 
 JNIEXPORT jstring JNICALL Java_be_brickbit_gsm_util_GSMUtil_readSMS
 (JNIEnv *env, jclass javaClass){
+    openConnection();
     char data[256]; //Text Message
     //Maybe make this a parameter?
     int timesToSend = 1;
@@ -74,36 +78,39 @@ JNIEXPORT jstring JNICALL Java_be_brickbit_gsm_util_GSMUtil_readSMS
 
 JNIEXPORT jboolean JNICALL Java_be_brickbit_gsm_util_GSMUtil_sendSMS
 (JNIEnv *env, jclass javaClass, jstring phone_number, jstring text){
+    openConnection();
     //Maybe make this a parameter?
     int timesToSend = 1;
     int count = 0;
     //Convert java String to native string
-    const char *nativePhoneNumber = env->GetStringUTFChars(phone_number, 0);
-    const char *nativeText = env->GetStringUTFChars(text, 0);
-    //required for conversion
-    env->ReleaseStringUTFChars(phone_number, nativePhoneNumber);
-    env->ReleaseStringUTFChars(text, nativeText);
+    const char* nativePhoneNumber = env->GetStringUTFChars(phone_number, 0);
+    const char* nativeText = env->GetStringUTFChars(text, 0);
+    fprintf(stderr, "Phone Number: ");
+    fprintf(stderr, nativePhoneNumber);
+    fprintf(stderr, "\n");
+    fprintf(stderr, "Text Body: ");
+    fprintf(stderr, nativeText);
+    fprintf(stderr, "\n");
+    
     //Sending
     while (count < timesToSend){
         delay(500);
         Serial.print("AT+CMGS=\"");   // send the SMS number
-        fprintf(stderr, "Phone Number: ");
-        fprintf(stderr, nativePhoneNumber);
-        fprintf(stderr, "\n");
-        Serial.print("0470540890");
-    	Serial.println("\"");
+        Serial.print(nativePhoneNumber);
+        Serial.println("\"");
         delay(1500);
-        Serial.print("Welcome Back Commander");     // the SMS body
-        fprintf(stderr, "Text Body: ");
-        fprintf(stderr, nativeText);
-        fprintf(stderr, "\n");
+        Serial.print(nativeText);     // the SMS body
         delay(500);
         Serial.write(0x1A);       //sends ++
         Serial.write(0x0D);
         Serial.write(0x0A);
         delay(1000);
+        Serial.flush();
         count++;
         fprintf(stderr, "SMS SEND \n");
     }
+    //required for conversion
+    env->ReleaseStringUTFChars(phone_number, nativePhoneNumber);
+    env->ReleaseStringUTFChars(text, nativeText);
     return JNI_TRUE;
 }
